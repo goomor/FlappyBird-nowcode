@@ -3,6 +3,9 @@ package game;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 
 
@@ -59,7 +62,7 @@ public class BirdGame extends JPanel{
         score = 0;
 
         // 初始化状态
-        state = START;
+        state = RUNNING;
     }
 
 
@@ -105,11 +108,90 @@ public class BirdGame extends JPanel{
     }
 
 
-
-
     /**
-         * 启动方法
-         */
+     * 开始游戏
+     */
+    public void action() throws Exception{
+
+
+
+        // 鼠标监听器
+        MouseListener l = new MouseAdapter() {
+            // 鼠标按下事件
+            public void mousePressed(MouseEvent e) {
+                try {
+                    switch (state) {
+                        case START:
+                            // 在开始状态，按下鼠标则转为运行状态。
+                            state = RUNNING;
+                            break;
+                        case RUNNING:
+                            // 在运行状态，按下鼠标则小鸟向上飞行。
+                            bird.flappy();
+                            break;
+                        case GAME_OVER:
+                            // 在结束状态，按下鼠标则重置数据，再次转为开始态。
+                            column1 = new Column(1);
+                            column2 = new Column(2);
+                            bird = new Bird();
+                            score = 0;
+                            state = START;
+                            break;
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        };
+
+
+        addMouseListener(l);
+
+
+        //不断的移动与重绘
+        while(true){
+            switch(state){
+                case START:
+                    //小鸟做出飞行动作
+                    bird.fly();
+                    //地面向左移动一步
+                    ground.step();
+                    break;
+                case RUNNING:
+                    //地面左移一步
+                    ground.step();
+                    //柱子向左移动一步
+                    column1.step();
+                    column2.step();
+                    //小鸟做出发飞行动作
+                    bird.fly();
+                    //小鸟上下移动一步
+                    bird.step();
+                    //计算分数
+                    if(bird.x == column1.x || bird.x == column2.x){
+                        score++;
+                    }
+                    //检测是否发生碰撞
+                    if(bird.hit(ground)||bird.hit(column1) || bird.hit(column2)){
+                        state = GAME_OVER;
+                    }
+                    break;
+            }
+
+            //重新绘制界面
+            repaint();
+            //休眠1000/60毫秒
+            Thread.sleep(1000/60);
+        }
+
+
+    }
+
+
+
+        /**
+             * 启动方法
+             */
 
 
     public static void main(String[] args) throws Exception{
@@ -121,6 +203,7 @@ public class BirdGame extends JPanel{
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
+        game.action();
     }
 
 
